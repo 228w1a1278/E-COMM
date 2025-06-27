@@ -4,6 +4,7 @@ import {
   syncUserCreation,
   syncUserUpdation,
   syncUserDeletion,
+  createUserOrder
 } from "@/config/inngest";
 
 export const { GET, POST, PUT } = serve({
