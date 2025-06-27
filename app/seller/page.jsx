@@ -2,8 +2,13 @@
 import React, { useState } from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
+import { useAppContext } from "@/context/AppContext";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 const AddProduct = () => {
+
+  const {getToken} =useAppContext()
 
   const [files, setFiles] = useState([]);
   const [name, setName] = useState('');
@@ -14,8 +19,45 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('category', category);
+    formData.append('price', price);
+    formData.append('offerPrice', offerPrice);
 
-  };
+    for( let i=0;i<files.length;i++){
+      formData.append('images', files[i]);
+    }
+
+    try {
+      const token=await getToken()
+      
+      const response = await axios.post('/api/product/add', formData, {
+      headers: { Authorization: `bearer ${token}` },
+    });
+      const data = response.data;
+
+      if (data?.success){
+        toast.success(data.message || "upload successfully")
+        setFiles([]);
+        setName('');
+        setDescription('');
+        setCategory('Earphone');
+        setPrice('');
+        setOfferPrice('');
+        } else {
+          toast.error(data?.message||"Something went wrong")
+      }
+    } catch (error) {
+  console.error("UPLOAD ERROR:", error); 
+  toast.error(error?.message || "Something went wrong!");
+}
+
+     }
+
+  
 
   return (
     <div className="flex-1 min-h-screen flex flex-col justify-between">
