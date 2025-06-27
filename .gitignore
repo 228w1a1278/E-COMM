@@ -13,7 +13,6 @@
 # testing
 /coverage
 .env
-tsconfig.json
 
 # next.js
 /.next/

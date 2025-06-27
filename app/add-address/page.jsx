@@ -1,7 +1,7 @@
 'use client'
 import { assets } from "@/assets/assets";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar.jsx";
+import Footer from "@/components/Footer.jsx";
 import Image from "next/image";
 import { useState } from "react";
 

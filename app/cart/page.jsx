@@ -1,10 +1,10 @@
 'use client'
 import React from "react";
 import { assets } from "@/assets/assets";
-import OrderSummary from "@/components/OrderSummary";
+import OrderSummary from "@/components/OrderSummary.jsx";
 import Image from "next/image";
-import Navbar from "@/components/Navbar";
-import { useAppContext } from "@/context/AppContext";
+import Navbar from "@/components/Navbar.jsx";
+import { useAppContext } from "@/context/AppContext.jsx";
 
 const Cart = () => {
 
