@@ -6,22 +6,41 @@ import { useAppContext } from "@/context/AppContext.jsx";
 import Footer from "@/components/Footer.jsx";
 import Navbar from "@/components/Navbar.jsx";
 import Loading from "@/components/Loading.jsx";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const MyOrders = () => {
 
-    const { currency } = useAppContext();
+    const { currency ,getToken,user} = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchOrders = async () => {
-        setOrders(orderDummyData)
-        setLoading(false);
+        try {
+            const token =await getToken()
+            
+            const {data} =await axios.get('/api/order/list',{headers:{Authorization:`Bearer ${token}`}})
+
+            if(data.success){
+            
+                setOrders(data.orders.reverse())
+                setLoading(false)
+            }else{
+                toast.error(data.message)
+                setLoading(false)
+            }
+        } catch (error) {
+            toast.error(error.message)
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
+        if(user){
         fetchOrders();
-    }, []);
+        }
+    }, [user]);
 
     return (
         <>
@@ -29,6 +48,7 @@ const MyOrders = () => {
             <div className="flex flex-col justify-between px-6 md:px-16 lg:px-32 py-6 min-h-screen">
                 <div className="space-y-5">
                     <h2 className="text-lg font-medium mt-6">My Orders</h2>
+                    {console.log("Rendering orders page - loading:", loading, "orders:", orders)}
                     {loading ? <Loading /> : (<div className="max-w-5xl border-t border-gray-300 text-sm">
                         {orders.map((order, index) => (
                             <div key={index} className="flex flex-col md:flex-row gap-5 justify-between p-5 border-b border-gray-300">

@@ -1,18 +1,21 @@
+"use client"
 import React from 'react'
 import { assets } from '@/assets/assets'
 import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 
 const ProductCard = ({ product }) => {
-
-    const { currency, router } = useAppContext()
+    const { currency, router, setCartItems,buyNow } = useAppContext()
 
     return (
         <div
-            onClick={() => { router.push('/product/' + product._id); scrollTo(0, 0) }}
+            onClick={() => {
+                router.push('/product/' + product._id);
+                scrollTo(0, 0);
+            }}
             className="flex flex-col items-start gap-0.5 max-w-[200px] w-full cursor-pointer"
         >
-            <div className="cursor-pointer group relative bg-gray-500/10 rounded-lg w-full h-52 flex items-center justify-center">
+            <div className="group relative bg-gray-500/10 rounded-lg w-full h-52 flex items-center justify-center">
                 <Image
                     src={product.image[0]}
                     alt={product.name}
@@ -51,7 +54,13 @@ const ProductCard = ({ product }) => {
 
             <div className="flex items-end justify-between w-full mt-1">
                 <p className="text-base font-medium">{currency}{product.offerPrice}</p>
-                <button className=" max-sm:hidden px-4 py-1.5 text-gray-500 border border-gray-500/20 rounded-full text-xs hover:bg-slate-50 transition">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // Stop event propagation to parent
+                        buyNow(product._id);
+                    }}
+                    className="max-sm:hidden px-4 py-1.5 text-gray-500 border border-gray-500/20 rounded-full text-xs hover:bg-slate-50 transition"
+                >
                     Buy now
                 </button>
             </div>

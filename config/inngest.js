@@ -1,9 +1,13 @@
 import { Inngest } from "inngest";
 import connectDB from "./db"; 
 import User from "@/models/User.js"; 
+import Order from "@/models/Order.js";
 
 // Inngest client
-export const inngest = new Inngest({ id: "quickcart-next" });
+export const inngest = new Inngest({ 
+  id: "quickcart-next",
+  signingKey: process.env.INNGEST_SIGNING_KEY
+});
 
 // Clerk: user.created
 export const syncUserCreation = inngest.createFunction(
@@ -65,19 +69,31 @@ export const createUserOrder=inngest.createFunction(
   },
  {event:'order/created'},
  async ({events}) =>{
-  const orders=events.map((event) =>{
-    return {
-      userId: event.data.userId,
-      items:event.data.items,
-      amount:event.data.amount,
-      address:event.data.address,
-      date:event.data.data
-    }
- })
+  console.log("Inngest createUserOrder triggered with events:", events);
+  
+  try {
+    const orders=events.map((event) =>{
+      console.log("Processing event:", event);
+      return {
+        userId: event.data.userId,
+        items:event.data.items,
+        amount:event.data.amount,
+        address:event.data.address,
+        date:event.data.date
+      }
+   })
+
+ console.log("Orders to be created:", orders);
 
  await connectDB()
- await Order.insertMany(orders)
+ const result = await Order.insertMany(orders)
 
- return {success:true,processed:orders.length}
+ console.log("Orders created successfully:", result);
+
+   return {success:true,processed:orders.length}
+  } catch (error) {
+    console.error("Error in createUserOrder:", error);
+    throw error;
+  }
 }
 )

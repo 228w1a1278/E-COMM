@@ -23,6 +23,8 @@ export const AppContextProvider = (props) => {
     const [userData, setUserData] = useState(false)
     const [isSeller, setIsSeller] = useState(false)
     const [cartItems, setCartItems] = useState({})
+    const [buyNowItem, setBuyNowItem] = useState(null); 
+
 
     const fetchProductData = async () => {
         try {
@@ -65,7 +67,7 @@ export const AppContextProvider = (props) => {
     }
 
     const addToCart = async (itemId) => {
-
+        if (buyNowItem) return; 
         let cartData = structuredClone(cartItems);
         if (cartData[itemId]) {
             cartData[itemId] += 1;
@@ -107,36 +109,51 @@ export const AppContextProvider = (props) => {
         }
     }
 
-    const getCartCount = () => {
-        let totalCount = 0;
-        for (const items in cartItems) {
-            if (cartItems[items] > 0) {
-                totalCount += cartItems[items];
-            }
-        }
-        return totalCount;
+const buyNow = (itemId) => {
+  if (buyNowItem) return; // Skip if buyNowItem is already set
+  setBuyNowItem({ product: itemId, quantity: 1 });
+  router.push('/order-summary');
+};
+
+
+
+    const getOrderItemCount = () => {
+    if (buyNowItem) {
+        return buyNowItem.quantity;
+    }
+    let total = 0;
+    for (const itemId in cartItems) {
+        total += cartItems[itemId];
+    }
+    return total;
+};
+
+const getOrderAmount = () => {
+    if (buyNowItem) {
+        const product = products.find(p => p._id === buyNowItem.product);
+        return product ? product.offerPrice * buyNowItem.quantity : 0;
     }
 
-    const getCartAmount = () => {
-        let totalAmount = 0;
-        for (const items in cartItems) {
-            let itemInfo = products.find((product) => product._id === items);
-            if (cartItems[items] > 0) {
-                totalAmount += itemInfo.offerPrice * cartItems[items];
-            }
+    let total = 0;
+    for (const itemId in cartItems) {
+        const product = products.find(p => p._id === itemId);
+        if (product) {
+            total += product.offerPrice * cartItems[itemId];
         }
-        return Math.floor(totalAmount * 100) / 100;
     }
+    return Math.floor(total * 100) / 100;
+};
+
 
     useEffect(() => {
         fetchProductData()
     }, [])
 
     useEffect(() => {
-        if(user){
-        fetchUserData()
-        }
-    }, [user])
+    if (user && window.location.pathname !== "/order-summary") {
+        fetchUserData();
+    }
+}, [user]);
 
     const value = {
         user,getToken,
@@ -146,7 +163,9 @@ export const AppContextProvider = (props) => {
         products, fetchProductData,
         cartItems, setCartItems,
         addToCart, updateCartQuantity,
-        getCartCount, getCartAmount
+        getOrderItemCount, getOrderAmount,
+        buyNow,
+        buyNowItem, setBuyNowItem 
     }
 
     return (
