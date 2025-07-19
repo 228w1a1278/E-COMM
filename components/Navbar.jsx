@@ -26,19 +26,28 @@ const Navbar = () => {
         <Link href="/all-products" className="hover:text-gray-900 transition">
           Shop
         </Link>
-        <Link href="/" className="hover:text-gray-900 transition">
+        <Link href="#footer" className="hover:text-gray-900 transition">
           About Us
         </Link>
-        <Link href="/" className="hover:text-gray-900 transition">
+        <Link href="#footer" className="hover:text-gray-900 transition">
           Contact
         </Link>
 
         {isSeller && <button onClick={() => router.push('/seller')} className="text-xs border px-4 py-1.5 rounded-full">Seller Dashboard</button>}
 
       </div>
+<ul className="hidden md:flex items-center gap-4">      
+<li>
+  <button
+    onClick={() => router.push("/all-products?search=")}
+    className="focus:outline-none"
+    aria-label="Search"
+    type="button"
+  >
+    <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
+  </button>
+</li>
 
-      <ul className="hidden md:flex items-center gap-4 ">
-        <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
         {user? <>
         <UserButton >
           <UserButton.MenuItems>
