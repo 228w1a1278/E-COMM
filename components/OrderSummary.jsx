@@ -84,7 +84,7 @@ const OrderSummary = () => {
       if (data.success) {
         toast.success(data.message);
         setCartItems({});
-        setBuyNowItem(null); // ✅ clear buyNowItem after placing order
+        setBuyNowItem(null); 
         router.push("/order-placed");
       } else {
         toast.error(data.message);

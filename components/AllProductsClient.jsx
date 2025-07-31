@@ -3,69 +3,150 @@ import ProductCard from "@/components/ProductCard.jsx";
 import Navbar from "@/components/Navbar.jsx";
 import Footer from "@/components/Footer.jsx";
 import { useAppContext } from "@/context/AppContext.jsx";
-import { useSearchParams, useRouter } from "next/navigation"; // For App Router
+import { useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
 const AllProducts = () => {
-  const { products } = useAppContext();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const initialSearch = searchParams.get("search") ?? "";
+  const { products, setProducts, isSeller } = useAppContext();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const params = useSearchParams();
 
-  const [search, setSearch] = useState(initialSearch);
-  const [filtered, setFiltered] = useState(products);
-
-  // Filter products as search changes
   useEffect(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) setFiltered(products);
-    else {
-      setFiltered(
-        products.filter((p) =>
-          p.name.toLowerCase().includes(s)
-        )
-      );
+    const categoryFromURL = params.get("category");
+    if (categoryFromURL) {
+      setSelectedCategory(categoryFromURL);
     }
-  }, [products, search]);
+  }, [params]);
 
-  // Keep search param updated in URL
-  useEffect(() => {
-    if (search !== initialSearch) {
-      // Update only if different
-      const sp = new URLSearchParams(Array.from(searchParams.entries()));
-      if (search) sp.set("search", search);
-      else sp.delete("search");
-      router.replace(`/all-products?${sp.toString()}`);
+//   const handleDeleteSelected = async () => {
+//   try {
+//     for (const id of selectedProducts) {
+//       const res = await fetch(`/api/products/delete/${id}`, {
+//         method: "DELETE", // ✅ Correct method
+//       });
+
+//       if (!res.ok) {
+//         console.error("Failed to delete:", id);
+//       }
+//     }
+
+//     setDeleteMode(false);
+//     setSelectedProducts([]);
+//     router.refresh(); // ✅ Refresh product list
+//   } catch (err) {
+//     console.error("Error deleting products:", err);
+//   }
+// };
+const handleDeleteSelected = async () => {
+  try {
+    for (const id of selectedProducts) {
+      const res = await fetch(`/api/products/delete/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        console.error("Failed to delete:", id);
+      }
     }
-    // eslint-disable-next-line
-  }, [search]);
+
+    // ✅ Update local UI state
+    filtered((prev) => prev.filter(p => !selectedProducts.includes(p._id)));
+
+    setDeleteMode(false);
+    setSelectedProducts([]);
+  } catch (err) {
+    console.error("Error deleting products:", err);
+  }
+};
+
+
+  const handleCheckboxToggle = (id) => {
+    setSelectedProducts((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
+    );
+  };
+
+  const filtered = products.filter((product) => {
+    const matchesCategory = selectedCategory
+      ? product.category === selectedCategory
+      : true;
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <>
       <Navbar />
-      <div className="flex flex-col items-start px-6 md:px-16 lg:px-32">
-        <div className="flex flex-col items-end pt-12 w-full">
-          <p className="text-2xl font-medium">All products</p>
-          <div className="w-16 h-0.5 bg-orange-600 rounded-full"></div>
-        </div>
-
-        {/* Search box (always visible or conditional) */}
-        <div className="w-full flex my-8">
+      <div className="flex flex-col items-center mt-8 px-4">
+        <div className="mb-4 flex flex-col sm:flex-row gap-4 w-full max-w-5xl justify-between items-center">
           <input
-            className="border px-4 py-2 w-full rounded"
-            placeholder="Search products by name..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus={initialSearch !== ""}
+            type="text"
+            placeholder="Search products..."
+            className="border border-gray-300 rounded px-4 py-2 w-full sm:w-1/2"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          {isSeller && (
+            <>
+              {!deleteMode ? (
+                <button
+                  onClick={() => setDeleteMode(true)}
+                  className="bg-red-500 text-white px-4 py-2 rounded text-sm"
+                >
+                  Select & Delete
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteSelected}
+                    disabled={selectedProducts.length === 0}
+                    className="bg-red-600 text-white px-3 py-2 rounded text-sm disabled:opacity-50"
+                  >
+                    Delete Selected ({selectedProducts.length})
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteMode(false);
+                      setSelectedProducts([]);
+                    }}
+                    className="bg-gray-300 text-black px-3 py-2 rounded text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 pb-14 w-full">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-14 w-full">
           {filtered.length === 0 ? (
-            <div className="col-span-full text-gray-400 py-8">No products found.</div>
+            <div className="col-span-full text-gray-400 py-8">
+              No products found.
+            </div>
           ) : (
             filtered.map((product, index) => (
-              <ProductCard key={index} product={product} />
+              <div key={index} className="relative">
+                <ProductCard product={product} />
+
+                {deleteMode && isSeller && (
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product._id)}
+                    onChange={() => handleCheckboxToggle(product._id)}
+                    className="absolute top-2 left-2 w-4 h-4"
+                  />
+                )}
+              </div>
             ))
           )}
         </div>
